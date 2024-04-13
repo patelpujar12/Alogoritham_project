@@ -1,5 +1,3 @@
-
-using System.Net;
 using System.Numerics;
 using System.Xml.Linq;
 using static System.Formats.Asn1.AsnWriter;
@@ -18,7 +16,7 @@ namespace Library_Toala_Patel
         static bool booksFound = false, validateArrayClient = false, validateArrayBook = false;
 
 
-        static int iDisplayClient = 0, iDisplayBook = 0, iDisplayEmployee = 0, iInsertEmployee = 0, iInsertClient = 0, iInsertBook = 0, vBookID, vClientID, vbookid, vEmployeeID, vInvoice;
+        static int iDisplayClient = 0, iDisplayBook = 0, iDisplayEmployee = 0, iInsertEmployee = 0, iInsertClient = 0, iInsertBook = 0, iInsertInvoice = 0, vBookID, vClientID, vbookid, vEmployeeID, vInvoiceID;
         static string vClientPass = "", vEmployeePass = "", vAuthor = "";
         static Employee[] employees = new Employee[ELEMENTSEMPLOYEE];
         static Client[] clients = new Client[ELEMENTSCLIENT];
@@ -62,7 +60,8 @@ namespace Library_Toala_Patel
             public int YearOfPublication;
             public double UnitPrice;
             public int Quantity;
-            public Book(int id, string name, string author, int yearofpublication, double unitprice, int quantity)
+            public int Stock;
+            public Book(int id, string name, string author, int yearofpublication, double unitprice, int quantity, int stock)
             {
                 Id = id;
                 Name = name;
@@ -70,21 +69,9 @@ namespace Library_Toala_Patel
                 YearOfPublication = yearofpublication;
                 UnitPrice = unitprice;
                 Quantity = quantity;
+                Stock = stock;
             }
         }
-        /*    struct sell
-            {
-                internal bool IsSold;
-                public int bookId;
-                public int soldBooks;
-
-                public (bool IsSold, int bookId, int soldBooks)
-                 {
-
-                    }
-    *//*
-            }
-    */
         struct Invoice
         {
             public int Id;
@@ -306,7 +293,25 @@ namespace Library_Toala_Patel
 
                                     case 7:
                                         Console.WriteLine("7.- Sell a book");
-                                        SellBook();
+                                        Console.Write("    Please enter Client Id : ");
+                                        vClientID = ReadInteger();
+                                        if (ClientExist(vClientID))
+                                        {
+                                            Console.WriteLine("    Client Name : " + clients[iDisplayClient].FullName);
+                                            Console.WriteLine("");
+                                            Console.Write("    Please enter book Id : ");
+                                            vBookID = ReadInteger();
+                                            Console.Write("    Please enter book Quantity: ");
+                                            int sQtty = ReadInteger();
+                                            Console.WriteLine("");
+                                            if (BookExist(vBookID))
+                                            {
+                                                Console.WriteLine("    Client Name : " + books[iDisplayBook].Name);
+                                                Console.WriteLine("    Quantity Available : " + books[iDisplayBook].Quantity);
+                                                SellBook(vClientID, vBookID, sQtty);
+                                            }
+                                            //SellBook(books[0], 3);
+                                        }
                                         Console.ReadLine();
                                         break;
                                     case 8:
@@ -318,7 +323,7 @@ namespace Library_Toala_Patel
                                     case 9:
                                         Console.WriteLine("9.- Display total of sales");
                                         Console.WriteLine("");
-                                        DisplayTotalSales();
+                                        DisplayTotalSale();
                                         Console.ReadLine();
                                         break;
                                     case 10:
@@ -376,7 +381,7 @@ namespace Library_Toala_Patel
         static void DisplayEmployeeMenu()
         {
             Console.WriteLine("------------------------------------------------------------------------");
-            Console.WriteLine("    EMPLOYEE MENU  -  " + employees[0].FullName  + " - " + DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss"));
+            Console.WriteLine("    EMPLOYEE MENU  -  " + employees[0].FullName + " - " + DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss"));
             Console.WriteLine("------------------------------------------------------------------------");
             Console.WriteLine("1)  Create a client");
             Console.WriteLine("2)  Modify one client by ID");
@@ -467,7 +472,7 @@ namespace Library_Toala_Patel
 
         }
 
-        // Function that create a new Cliente array. 
+        // Function that create a new Cliente array.
         static bool CreateClient(int clientId, string name, string pass)
         {
             clients[iInsertClient].Id = clientId;
@@ -477,6 +482,21 @@ namespace Library_Toala_Patel
             iInsertClient = iInsertClient + 1;
             return true;
 
+        }
+
+        // Function that create a new Invoice in Array.
+        static bool CreateInvoice(int clientId, int bookId, int quantity, double price, double total)
+        {
+            vInvoiceID = vInvoiceID + 1;
+            invoices[iInsertInvoice].Id = vInvoiceID;
+            invoices[iInsertInvoice].ClientId = clientId;
+            invoices[iInsertInvoice].BookId = bookId;
+            invoices[iInsertInvoice].Quantity = quantity;
+            invoices[iInsertInvoice].UnitPrice = price;
+            invoices[iInsertInvoice].Total = total;
+
+            iInsertInvoice = iInsertInvoice + 1;
+            return true;
         }
 
         static bool ModifyClient(int clientId, string name, string pass)
@@ -514,20 +534,19 @@ namespace Library_Toala_Patel
         // Function that fills the Book array whith 10 element by default
         static void FillDefaultBook()
         {
-            CreateBook(10, "Little Women", "Louisa May Alcott", 2023, 25.60, 10);
-            CreateBook(11, "The Great Gatsby", "F.S. Fitzgerald", 2004, 10.99, 5);
-            CreateBook(12, "Dracula", "Bram Stoker", 2000, 6.99, 5);
-            CreateBook(13, "The Legend of Sleepy Hollow", "Washington Irving", 2019, 11.52, 20);
-            CreateBook(14, "The Chronicles of Narnia Songbook", "Hal Leonard", 2006, 14.56, 20);
-            CreateBook(15, "The Lord Of The Rings", "J. R. R. Tolkien", 2003, 38.15, 10);
+            CreateBook(01, "Little Women", "Louisa May Alcott", 2023, 25.60, 10);
+            CreateBook(02, "The Great Gatsby", "F.S. Fitzgerald", 2004, 10.99, 5);
+            CreateBook(03, "Dracula", "Bram Stoker", 2000, 6.99, 5);
+            CreateBook(04, "The Legend of Sleepy Hollow", "Washington Irving", 2019, 11.52, 20);
+            CreateBook(05, "The Chronicles of Narnia Songbook", "Hal Leonard", 2006, 14.56, 20);
+            CreateBook(06, "The Lord Of The Rings", "J. R. R. Tolkien", 2003, 38.15, 10);
             //CreateBook(16, "The Secret Garden", "Frances Hodgson Burnett", 2012 ,11.29 , 10);
-            CreateBook(17, "The Last of the Mohicans", "James Fenimore Cooper ", 1982, 17.49, 10);
-            CreateBook(18, "To Kill a Mockingbird", "Harper Lee", 2018, 16.99, 10);
-            CreateBook(19, "One Flew Over the Cuckoo's Nest", "Ken Kesey", 2012, 24.00, 10);
-            CreateBook(20, "Frankenstein", "Mary", 1994, 14.00, 10);
-            CreateBook(20, "Frankenstein XY", "Mary", 1996, 25.00, 25);
+            CreateBook(07, "The Last of the Mohicans", "James Fenimore Cooper ", 1982, 17.49, 10);
+            CreateBook(08, "To Kill a Mockingbird", "Harper Lee", 2018, 16.99, 10);
+            CreateBook(09, "One Flew Over the Cuckoo's Nest", "Ken Kesey", 2012, 24.00, 10);
+            CreateBook(10, "Frankenstein", "Mary", 1994, 14.00, 10);
+            CreateBook(11, "Frankenstein XY", "Mary", 1996, 25.00, 25);
             //CreateBook(20, "Frankenstein", "Mary Shelley", 1994, 14.00, 10);
-
         }
 
         //Temporarily for testing only - fill Array Invoice
@@ -535,42 +554,45 @@ namespace Library_Toala_Patel
         {
             invoices[0].Id = 1;
             invoices[0].ClientId = 1;
-            invoices[0].BookId = 10;
+            invoices[0].BookId = 01;
             invoices[0].Quantity = 1;
             invoices[0].UnitPrice = 26.60;
-            invoices[0].Total= 26.60;
+            invoices[0].Total = 26.60;
 
             invoices[1].Id = 1;
             invoices[1].ClientId = 1;
-            invoices[1].BookId = 11;
+            invoices[1].BookId = 02;
             invoices[1].Quantity = 2;
             invoices[1].UnitPrice = 10.99;
             invoices[1].Total = 21.98;
 
             invoices[2].Id = 1;
             invoices[2].ClientId = 1;
-            invoices[2].BookId = 12;
+            invoices[2].BookId = 03;
             invoices[2].Quantity = 1;
             invoices[2].UnitPrice = 6.99;
             invoices[2].Total = 6.99;
 
             invoices[3].Id = 2;
             invoices[3].ClientId = 1;
-            invoices[3].BookId = 19;
+            invoices[3].BookId = 04;
             invoices[3].Quantity = 1;
             invoices[3].UnitPrice = 24.00;
             invoices[3].Total = 24.00;
 
             invoices[4].Id = 2;
             invoices[4].ClientId = 1;
-            invoices[4].BookId = 20;
+            invoices[4].BookId = 05;
             invoices[4].Quantity = 1;
             invoices[4].UnitPrice = 14.00;
             invoices[4].Total = 14.00;
 
+            iInsertInvoice = 5;
+            vInvoiceID = 2;
+
         }
 
-        //Function that display all Books array with in 
+        //Function that display all Books array with in
         static void DisplayAllBooksAvailable()
         {
             Console.WriteLine("------------------------------------------------------");
@@ -603,7 +625,7 @@ namespace Library_Toala_Patel
             {
                 if (books[i].Author == author)
                 {
-                    Console.WriteLine(books[i].Id + "\t" +  books[i].Name + "\t\t\t" + books[i].Author + "\t" + books[i].YearOfPublication + "\t" + books[i].UnitPrice + "\t" + books[i].Quantity);
+                    Console.WriteLine(books[i].Id + "\t" + books[i].Name + "\t\t\t" + books[i].Author + "\t" + books[i].YearOfPublication + "\t" + books[i].UnitPrice + "\t" + books[i].Quantity);
                 }
             }
             //If I have only one books with this author, it's ok, but If there are more than one books with the same author don't work, because return only the first index searched.
@@ -638,6 +660,7 @@ namespace Library_Toala_Patel
             }
             return iSearch;
         }
+
 
         //Function that validate if a book exists or not in Book Array and returns true or false, also returns the index where the book is saved
         static bool BookExist(int bookid)
@@ -691,7 +714,7 @@ namespace Library_Toala_Patel
         static bool ValidateEmployeePass(int employeeId, string Emppass)
         {
             bool iSearch = false;
-            if (employees[iDisplayEmployee].Id== employeeId && employees[iDisplayEmployee].Password == Emppass)
+            if (employees[iDisplayEmployee].Id == employeeId && employees[iDisplayEmployee].Password == Emppass)
             { iSearch = true; }
             return iSearch;
         }
@@ -705,10 +728,13 @@ namespace Library_Toala_Patel
 
         static void DisplayAllBooks()
         {
-            Console.WriteLine("All books available:");
+            Console.WriteLine("All the books");
             foreach (Book book in books)
             {
-                Console.WriteLine($"ID: {book.Id}, Name: {book.Name}, Author: {book.Author}, Year: {book.YearOfPublication}, Price: {book.UnitPrice}, Quantity: {book.Quantity}");
+                if (book.Id != 0)
+                {
+                    Console.WriteLine($"ID: {book.Id}, Name: {book.Name}, Author: {book.Author}, Year: {book.YearOfPublication}, Price: {book.UnitPrice}, Quantity: {book.Quantity}");
+                }
             }
         }
 
@@ -742,7 +768,7 @@ namespace Library_Toala_Patel
                 if (invoices[i].Id != 0)
                 {
                     BookExist(invoices[i].BookId);
-                    Console.WriteLine(invoices[i].Id + "\t\t" + invoices[i].BookId + "-" + books[iDisplayBook].Name + "\t\t"  + invoices[i].Quantity + "\t\t" + invoices[i].UnitPrice + "\t\t" + invoices[i].Total);
+                    Console.WriteLine(invoices[i].Id + "\t\t" + invoices[i].BookId + "-" + books[iDisplayBook].Name + "\t\t" + invoices[i].Quantity + "\t\t" + invoices[i].UnitPrice + "\t\t" + invoices[i].Total);
                     //Console.WriteLine(invoices[i].Id + "-" + invoices[i].BookId + "-" + books[iDisplayBook].Name + "-," + invoices[i].Quantity + "-" + invoices[i].UnitPrice + "-" + invoices[i].Total);
                 }
             }
@@ -776,7 +802,7 @@ namespace Library_Toala_Patel
 
             else
             {
-                Console.Write("    Please enter Book Id # " + iInsertBook+ ": ");
+                Console.Write("    Please enter Book Id # " + iInsertBook + ": ");
                 vbookid = ReadInteger();
                 if (BookExist(vbookid))
                 {
@@ -862,11 +888,36 @@ namespace Library_Toala_Patel
             Console.ReadLine();
         }
 
-        static void SellBook()
+        static void ModifyBookStock(int vquantity)
         {
+            books[iDisplayBook].Quantity -= vquantity;
         }
+
+        static void SellBook(int clientID, int bookID, int vquantity)
+        {
+            if (books[iDisplayBook].Quantity >= vquantity)
+            {
+                // Reduce stock count
+                ModifyBookStock(vquantity);
+
+                // Calculate revenue
+                double revenue = vquantity * books[iDisplayBook].UnitPrice;
+
+                Console.WriteLine($"    Sold {vquantity} copies of {books[iDisplayBook].Name} for ${revenue}");
+                Console.WriteLine($"    Remaining Quantity of {books[iDisplayBook].Name}: {books[iDisplayBook].Quantity}");
+
+                // we can add code here to update sales records in Invoice Array
+                CreateInvoice(clientID, bookID, vquantity, books[iDisplayBook].UnitPrice, revenue);
+
+            }
+            else
+            {
+                Console.WriteLine($"   Insufficient Quantity to sell {vquantity} copies of {books[iDisplayBook].Name}");
+            }
+        }
+
         //Function that calculates the total of sales - Array Invoice
-        static void DisplayTotalSales()
+        static void DisplayTotalSale()
         {
             double TotalSales = 0;
             for (int i = 0; i < ELEMENTSINVOICE; i++)
@@ -880,3 +931,5 @@ namespace Library_Toala_Patel
     }
 
 }
+
+
